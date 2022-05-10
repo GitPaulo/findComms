@@ -1,9 +1,11 @@
 import { Component } from "@angular/core";
+import { MatDialog } from "@angular/material/dialog";
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
 import { catchError, finalize, Observable, of } from "rxjs";
-import { TwitterService } from "src/twitter.service";
+import { FindDomain, TwitterService } from "src/twitter.service";
 import { CommsData } from "../twitter.service";
+import { InfoDialogComponent } from "./info-dialog/info-dialog.component";
 
 const githubSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -17,14 +19,15 @@ const githubSVG = `
 })
 export class AppComponent {
   title = "findcomms";
-  error = null;
   loading = false;
   results$: Observable<CommsData> = new Observable<CommsData>();
+  error = "";
 
   constructor(
     private twitterService: TwitterService,
     iconRegistry: MatIconRegistry,
-    sanitizer: DomSanitizer
+    sanitizer: DomSanitizer,
+    private dialog: MatDialog
   ) {
     iconRegistry.addSvgIconLiteral(
       "github",
@@ -36,20 +39,43 @@ export class AppComponent {
 
   searchTrigger($event: Event): void {
     const stringEmitted = ($event.target as HTMLInputElement).value;
+    if (stringEmitted.length < 3) return;
     const emptyData: CommsData = { users: [], terms: {}, statuses: {} };
+    const splitIndex = stringEmitted.indexOf(":");
 
-    this.error = null;
+    console.log(stringEmitted);
+
+    let userIdentifier = stringEmitted;
+    let domain: FindDomain = "all";
+    if (splitIndex > 0) {
+      userIdentifier = stringEmitted.substring(0, splitIndex);
+      const domainString = stringEmitted.substring(splitIndex + 1) || "";
+      switch (domainString) {
+        case "followers":
+          domain = "followers";
+          break;
+        case "following":
+          domain = "following";
+          break;
+        default:
+          domain = "all";
+      }
+    }
+
+    this.error = "";
     this.loading = true;
-    this.results$ = this.twitterService.getCommsUsers(stringEmitted).pipe(
-      catchError((val) => {
-        this.error = val.error;
-        return of(emptyData);
-      }),
-      finalize(() => {
-        this.loading = false;
-        return of(emptyData);
-      })
-    );
+    this.results$ = this.twitterService
+      .getCommsUsers(userIdentifier, domain)
+      .pipe(
+        catchError(({ error }: { error: Error }) => {
+          console.log(error);
+          this.error = error.message || "Application error or API is down?";
+          return of(emptyData);
+        }),
+        finalize(() => {
+          this.loading = false;
+        })
+      );
   }
 
   getTerms(termMap: any, userId: string): string[] {
@@ -59,5 +85,13 @@ export class AppComponent {
   gotoTwitterProfile(user: any): void {
     window.location.href =
       user.url || `https://twitter.com/${user.screen_name}`;
+  }
+
+  openInfoDialog(): void {
+    const dialogRef = this.dialog.open(InfoDialogComponent);
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      console.log(`Dialog result: ${result}`);
+    });
   }
 }

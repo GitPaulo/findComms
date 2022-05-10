@@ -1,0 +1,53 @@
+<mat-dialog-content class="mat-typography">
+  <h1>findComms</h1>
+  <p>
+    findComms is a tool that searches twitter profiles for artists with
+    stores/commissions/etc.
+  </p>
+  <p>
+    findComms is powered by the public twitter API and therefore is limited by
+    its rates.
+  </p>
+  <p>
+    <b>
+      At the moment, users with followers in the thousands will not have full
+      searches. (WIP)
+    </b>
+  </p>
+
+  <h2>Usage</h2>
+  <p>
+    Simply search a user by id or display name (https://twitter.com/this_part)
+    You can filter by adding the selector ':', cases:
+  </p>
+  <ul>
+    <li>:following</li>
+    <li>:followers</li>
+    *the default search space is both.
+  </ul>
+  <p><b>Example:</b> MyDisplayName:followers</p>
+  <p>That will search all of "MyDisplayName's" followers for artists.</p>
+
+  <h2>Bug Reporting</h2>
+  <p>Is the app not working? Read the error displayed.</p>
+  <ul>
+    <li>
+      Does it mention the API?
+      <ul>
+        <li>If so, i'm sorry nothing I can do about that..</li>
+        <li>If not, click on the top left icon and report the issue!</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2>Credits</h2>
+  <p>Thanks Paulo :)</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>
+    Not understood but can't be hard to use?
+  </button>
+  <button mat-button [mat-dialog-close]="true" cdkFocusInitial>
+    Understood
+  </button>
+</mat-dialog-actions>
