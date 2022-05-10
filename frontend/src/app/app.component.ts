@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, ElementRef, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
@@ -18,6 +18,8 @@ const githubSVG = `
   styleUrls: ["./app.component.less"],
 })
 export class AppComponent {
+  @ViewChild("searchInput")
+  searchInput!: ElementRef;
   title = "findcomms";
   loading = false;
   results$: Observable<CommsData> = new Observable<CommsData>();
@@ -60,6 +62,11 @@ export class AppComponent {
         default:
           domain = "all";
       }
+      // highlight
+      this.searchInput.nativeElement.setSelectionRange(
+        splitIndex,
+        stringEmitted.length
+      );
     }
 
     this.error = "";
@@ -83,8 +90,9 @@ export class AppComponent {
   }
 
   gotoTwitterProfile(user: any): void {
-    window.location.href =
-      user.url || `https://twitter.com/${user.screen_name}`;
+    window
+      .open(user?.url || `https://twitter.com/${user?.screen_name}`, "_blank")
+      ?.focus();
   }
 
   openInfoDialog(): void {
