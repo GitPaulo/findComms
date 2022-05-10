@@ -1,4 +1,11 @@
-<h1>working!</h1>
+<a href="https://github.com/GitPaulo/findcomms">
+  <mat-icon
+    class="github-icon"
+    svgIcon="github"
+    aria-hidden="false"
+    aria-label="Example thumbs up SVG icon"
+  ></mat-icon>
+</a>
 <div class="interaction-container">
   <div cdkTrapFocus [cdkTrapFocusAutoCapture]="true" class="search-box">
     <label for="search-box"> Search Input </label>
@@ -8,7 +15,7 @@
     <input
       type="text"
       class="input-search"
-      placeholder="Type to Search..."
+      placeholder="Type a Username to Search for Artists..."
       (ngxInputSearch)="searchTrigger($event)"
     />
     <mat-spinner
@@ -19,10 +26,10 @@
     ></mat-spinner>
   </div>
   <div class="search-results">
-    <div class="info-message" *ngIf="(results$ | async)?.users?.length === 0">
+    <div class="info message" *ngIf="(results$ | async)?.users?.length === 0">
       No results.
     </div>
-    <div class="error-message" *ngIf="error">{{ error }}</div>
+    <div class="error message" *ngIf="error">{{ error }}</div>
     <ng-container *ngIf="results$ | async as results">
       <ng-container *ngFor="let user of results?.users">
         <div class="search-result" (click)="gotoTwitterProfile(user)">

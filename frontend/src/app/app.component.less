@@ -1,3 +1,12 @@
+.github-icon {
+  margin: 12px;
+  color: black;
+
+  &:hover {
+    color: #667683;
+  }
+}
+
 .interaction-container {
   position: absolute;
   left: 50%;
@@ -63,12 +72,12 @@
     }
 
     .btn-search:focus {
-      left: 26px;
+      margin-right: 40px;
       transition: all 500ms cubic-bezier(0, 0.11, 0.35, 2);
     }
 
     .btn-search:focus ~ .input-search {
-      width: 300px;
+      width: 460px;
       border-radius: 0px;
       background-color: transparent;
       border-bottom: 1px solid rgba(255, 255, 255, 0.678);
@@ -76,7 +85,7 @@
     }
 
     .input-search:focus {
-      width: 300px;
+      width: 460px;
       border-radius: 0px;
       background-color: transparent;
       border-bottom: 1px solid rgba(255, 255, 255, 0.5);
@@ -93,22 +102,23 @@
     transition: all 750ms cubic-bezier(0, 0.11, 0.35, 2);
     height: 0;
 
-    .error-message {
-      background-color: rgb(150, 81, 81);
+    .message {
+      background-color: rgb(53, 53, 53);
       padding: 8px;
       margin: 0px 16px;
       border-radius: 8px;
+    }
+
+    .message.error {
+      background-color: rgb(150, 81, 81);
 
       &::before {
         content: "⛔ ";
       }
     }
 
-    .info-message {
-      background-color: rgb(92, 149, 196);
-      padding: 8px;
-      margin: 0px 16px;
-      border-radius: 8px;
+    .message.info {
+      background-color: #345e8b;
 
       &::before {
         content: "ⓘ ";
