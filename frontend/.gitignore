@@ -38,3 +38,9 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# vscode
+.vscode
+
+# angular cache
+.angular

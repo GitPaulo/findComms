@@ -43,3 +43,6 @@ Thumbs.db
 
 # environment
 .env
+
+# vscode
+.vscode
