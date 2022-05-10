@@ -25,7 +25,7 @@
     <div class="error-message" *ngIf="error">{{ error }}</div>
     <ng-container *ngIf="results$ | async as results">
       <ng-container *ngFor="let user of results?.users">
-        <div class="search-result">
+        <div class="search-result" (click)="gotoTwitterProfile(user)">
           {{ user.name }}
           <span
             class="search-term"

@@ -1,15 +1,15 @@
-import { Component } from '@angular/core';
-import { catchError, finalize, Observable, of } from 'rxjs';
-import { TwitterService } from 'src/twitter.service';
-import { CommsData } from '../twitter.service';
+import { Component } from "@angular/core";
+import { catchError, finalize, Observable, of } from "rxjs";
+import { TwitterService } from "src/twitter.service";
+import { CommsData } from "../twitter.service";
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.less'],
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.less"],
 })
 export class AppComponent {
-  title = 'findcomms';
+  title = "findcomms";
   error = null;
   loading = false;
   results$: Observable<CommsData> = new Observable<CommsData>();
@@ -38,5 +38,10 @@ export class AppComponent {
 
   getTerms(termMap: any, userId: string): string[] {
     return termMap[userId];
+  }
+
+  gotoTwitterProfile(user: any): void {
+    window.location.href =
+      user.url || `https://twitter.com/${user.displayName}`;
   }
 }
