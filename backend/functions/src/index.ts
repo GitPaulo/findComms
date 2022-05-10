@@ -1,9 +1,4 @@
-import {
-  TwitterApi,
-  UserV1,
-  UserV2,
-  UserV2TimelineResult,
-} from "twitter-api-v2";
+import { TwitterApi, UserV1, UserV2 } from "twitter-api-v2";
 import express, { Express, Request, Response } from "express";
 import * as functions from "firebase-functions";
 import dotenv from "dotenv";
@@ -17,8 +12,6 @@ dotenv.config();
 
 // Express
 const app: Express = express();
-const port = process.env.PORT;
-const production = process.env.PRODUCTION;
 // Twitter API
 const twitterClient = new TwitterApi(String(process.env.TWITTER_API_BEARER));
 const client = twitterClient.readWrite;
@@ -37,11 +30,13 @@ app.get("/api/clearcaches", (req, res) => {
   index.clear();
   cache.clear();
   console.log("All memory caches cleared.");
+  return res.status(204);
 });
 
 type FindDomain = "followers" | "following" | "all";
 app.get("/api/find", async (req: Request, res: Response) => {
   let userIdentifier = req.query.userIdentifier as string;
+  // eslint-disable-next-line prefer-const
   let findDomain = (req.query.domain as FindDomain) || "all";
 
   // Log
