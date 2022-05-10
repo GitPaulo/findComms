@@ -23,6 +23,7 @@ const production = process.env.PRODUCTION;
 const twitterClient = new TwitterApi(String(process.env.TWITTER_API_BEARER));
 const client = twitterClient.readWrite;
 // Memory Cache
+const index = new memcache.Cache();
 const cache = new memcache.Cache();
 
 app.use(cors());
@@ -31,15 +32,17 @@ app.get("/", (req, res) => {
   res.sendFile("index.html", { root: __dirname });
 });
 
+app.get("/api/clearcaches", (req, res) => {
+  console.log("/clearcaches");
+  index.clear();
+  cache.clear();
+  console.log("All memory caches cleared.");
+});
+
 type FindDomain = "followers" | "following" | "all";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface CommsData {
-  users: UserV1[];
-  terms: { [id: string]: string };
-}
 app.get("/api/find", async (req: Request, res: Response) => {
-  const userIdentifier = req.query.userIdentifier as string;
-  const findDomain = (req.query.domain as FindDomain) || "all";
+  let userIdentifier = req.query.userIdentifier as string;
+  let findDomain = (req.query.domain as FindDomain) || "all";
 
   // Log
   console.log("/followers userIdentifier", userIdentifier);
@@ -48,18 +51,27 @@ app.get("/api/find", async (req: Request, res: Response) => {
     return res.status(400).send("Invalid user identifier.");
   }
 
+  // Trim
+  userIdentifier = userIdentifier.trim();
+
   // Resolve ID
   let id: string;
   try {
-    if (!isNaN(Number(userIdentifier.toString()))) {
-      id = userIdentifier;
+    const cachedId = index.get(userIdentifier) as string;
+    if (cachedId) {
+      console.log("Returned cached index");
+      id = cachedId;
     } else {
-      id = (await client.v2.userByUsername(userIdentifier)).data.id;
+      id = (await client.v2.userByUsername(userIdentifier))?.data?.id;
     }
+    if (!id) throw Error("id resolved to nothing.");
+    index.put(userIdentifier, id);
     console.log("Resolved ID: " + id);
   } catch (e: any) {
     console.log(e.stack);
-    return res.status(400).send("Could not find username.");
+    return res
+      .status(400)
+      .send(`Could not find user from '${userIdentifier}'.`);
   }
 
   // Resolve domain
