@@ -42,6 +42,6 @@ export class AppComponent {
 
   gotoTwitterProfile(user: any): void {
     window.location.href =
-      user.url || `https://twitter.com/${user.displayName}`;
+      user.url || `https://twitter.com/${user.screen_name}`;
   }
 }
