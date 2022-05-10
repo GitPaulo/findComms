@@ -1,0 +1,40 @@
+<h1>working!</h1>
+<div class="interaction-container">
+  <div cdkTrapFocus [cdkTrapFocusAutoCapture]="true" class="search-box">
+    <label for="search-box"> Search Input </label>
+    <button tabindex="-1" class="btn-search" matSuffix mat-button>
+      <mat-icon>search</mat-icon>
+    </button>
+    <input
+      type="text"
+      class="input-search"
+      placeholder="Type to Search..."
+      (ngxInputSearch)="searchTrigger($event)"
+    />
+    <mat-spinner
+      class="spinner-search"
+      *ngIf="loading"
+      [diameter]="32"
+      [color]="'accent'"
+    ></mat-spinner>
+  </div>
+  <div class="search-results">
+    <div class="info-message" *ngIf="(results$ | async)?.users?.length === 0">
+      No results.
+    </div>
+    <div class="error-message" *ngIf="error">{{ error }}</div>
+    <ng-container *ngIf="results$ | async as results">
+      <ng-container *ngFor="let user of results?.users">
+        <div class="search-result">
+          {{ user.name }}
+          <span
+            class="search-term"
+            *ngFor="let term of getTerms(results.terms, user.id)"
+          >
+            {{ term }}
+          </span>
+        </div>
+      </ng-container>
+    </ng-container>
+  </div>
+</div>
