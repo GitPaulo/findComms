@@ -44,3 +44,6 @@ Thumbs.db
 
 # angular cache
 .angular
+
+# firebaser
+.firebase
