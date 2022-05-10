@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 // ? this wont scale
 import memcache from "memory-cache";
+import termsMap from "./terms_map.json";
 
 dotenv.config();
 
@@ -112,29 +113,39 @@ app.get("/api/find", async (req: Request, res: Response) => {
 
   // Filter users by comms in descriptions
   // TODO: more complex search
-  let terms = ["store", "commission", "store"];
+  let openOrClosed: { [id: string]: "open" | "closed" | "unknown" } = {};
   let foundTerms: { [id: string]: string[] } = {};
   domainUsers = domainUsers.filter((user: UserV1) => {
-    const term = terms.find(
-      (term: string) =>
-        user.name.toLowerCase().includes(term) ||
-        user.description?.toLowerCase().includes(term)
-    );
-
-    if (term) {
-      const entry = foundTerms[user.id];
-      if (entry) {
-        entry.push(term);
-      } else {
-        foundTerms[user.id] = [term];
+    for (let [keyTerm, terms] of Object.entries(termsMap)) {
+      const searchSpace =
+        user.name.toLowerCase() + user.description?.toLowerCase();
+      // terms
+      if (terms.some((term: string) => searchSpace.includes(term))) {
+        foundTerms[user.id] = foundTerms[user.id]
+          ? [...foundTerms[user.id], keyTerm]
+          : [keyTerm];
+      }
+      // open/closed
+      // TODO: improve
+      let open = searchSpace.includes("open");
+      let closed = searchSpace.includes("closed");
+      if (open) {
+        openOrClosed[user.id] = "open";
+      } else if (closed) {
+        openOrClosed[user.id] = "closed";
+      } else if (open && closed) {
+        openOrClosed[user.id] = "unknown";
       }
     }
 
-    return Boolean(term);
+    return Boolean(foundTerms[user.id]?.length);
   });
+
+  console.log(foundTerms);
 
   // Cache it, rate limits!!
   const responseValue = JSON.stringify({
+    statuses: openOrClosed,
     terms: foundTerms,
     users: domainUsers,
   });

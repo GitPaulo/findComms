@@ -1,20 +1,21 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
 
 export interface CommsData {
   users: any[];
   terms: { [id: string]: string };
+  statuses: { [id: string]: "open" | "closed" | "unknown" };
 }
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: "root",
 })
 export class TwitterService {
   constructor(private http: HttpClient) {}
 
   getCommsUsers(userId: string): Observable<CommsData> {
-    return this.http.get<CommsData>('/api/find', {
+    return this.http.get<CommsData>("/api/find", {
       params: { userIdentifier: userId },
     });
   }

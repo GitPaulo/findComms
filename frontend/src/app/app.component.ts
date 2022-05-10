@@ -36,18 +36,18 @@ export class AppComponent {
 
   searchTrigger($event: Event): void {
     const stringEmitted = ($event.target as HTMLInputElement).value;
+    const emptyData: CommsData = { users: [], terms: {}, statuses: {} };
 
     this.error = null;
     this.loading = true;
     this.results$ = this.twitterService.getCommsUsers(stringEmitted).pipe(
       catchError((val) => {
         this.error = val.error;
-        console.log(val);
-        return of({ users: [], terms: {} });
+        return of(emptyData);
       }),
       finalize(() => {
         this.loading = false;
-        return of({ users: [], terms: {} });
+        return of(emptyData);
       })
     );
   }

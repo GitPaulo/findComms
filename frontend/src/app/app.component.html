@@ -40,6 +40,20 @@
           >
             {{ term }}
           </span>
+          <span
+            *ngIf="results.statuses[user.id]"
+            [ngStyle]="{
+              'background-color':
+                results.statuses[user.id] === 'closed'
+                  ? '#f54d4d'
+                  : results.statuses[user.id] === 'open'
+                  ? '#6fd36f'
+                  : '#8d8181'
+            }"
+            class="status-term"
+          >
+            {{ results.statuses[user.id] || "unknown" }}
+          </span>
         </div>
       </ng-container>
     </ng-container>
