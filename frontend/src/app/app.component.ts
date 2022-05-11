@@ -1,3 +1,4 @@
+import { BreakpointObserver, BreakpointState } from "@angular/cdk/layout";
 import { Component, ElementRef, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatIconRegistry } from "@angular/material/icon";
@@ -25,21 +26,33 @@ export interface LargeRequestDialogData {
 export class AppComponent {
   @ViewChild("searchInput")
   searchInput!: ElementRef;
-  title = "findcomms";
+  title = "findComms";
+  searchPlaceholder = "Type a Twitter Username to Search...";
   loading = false;
   results$: Observable<CommsData> = new Observable<CommsData>();
   error = "";
 
   constructor(
     private twitterService: TwitterService,
+    private dialog: MatDialog,
     iconRegistry: MatIconRegistry,
     sanitizer: DomSanitizer,
-    private dialog: MatDialog
+    breakpointObserver: BreakpointObserver
   ) {
     iconRegistry.addSvgIconLiteral(
       "github",
       sanitizer.bypassSecurityTrustHtml(githubSVG)
     );
+    breakpointObserver
+      .observe(["(max-width: 600px)"])
+      .subscribe((state: BreakpointState) => {
+        console.log("?");
+        if (state.matches) {
+          this.searchPlaceholder = "Twitter Username...";
+        } else {
+          this.searchPlaceholder = "Type a Twitter Username to Search...";
+        }
+      });
   }
 
   ngOnInit(): void {}
@@ -102,7 +115,7 @@ export class AppComponent {
         this.error =
           error instanceof ProgressEvent
             ? "API is likely down!"
-            : error || error.message || "No clue what went wrong, retry lol?";
+            : error || error?.message || "No clue what went wrong, retry lol?";
         return of(emptyData);
       }),
       finalize(() => {
@@ -124,6 +137,14 @@ export class AppComponent {
   }
 
   openInfoDialog(): void {
-    const dialogRef = this.dialog.open(InfoDialogComponent);
+    this.dialog.open(InfoDialogComponent);
+  }
+
+  focusWithDelay(event: MouseEvent, delay: number): void {
+    // shitcode
+    setTimeout(() => {
+      this.searchInput.nativeElement.focus();
+    }, delay);
+    event.stopPropagation();
   }
 }

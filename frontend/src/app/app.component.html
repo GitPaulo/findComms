@@ -10,24 +10,28 @@
   <mat-icon>informational</mat-icon>
 </button>
 <div class="interaction-container">
-  <div cdkTrapFocus [cdkTrapFocusAutoCapture]="true" class="search-box">
-    <label for="search-box"> Search Input </label>
-    <button tabindex="-1" class="btn-search" matSuffix mat-button>
-      <mat-icon>search</mat-icon>
-    </button>
-    <input
-      #searchInput
-      type="text"
-      class="input-search"
-      placeholder="Type a Twitter Username to Search..."
-      (ngxInputSearch)="searchTrigger($event)"
-    />
+  <div class="search-box">
     <mat-spinner
       class="spinner-search"
       *ngIf="loading"
       [diameter]="32"
       [color]="'accent'"
     ></mat-spinner>
+    <div (click)="focusWithDelay($event, 420)" class="search-container">
+      <label for="search-box"> Search Input </label>
+      <button class="btn-search" matSuffix mat-button>
+        <mat-icon>search</mat-icon>
+      </button>
+      <input
+        #searchInput
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        type="text"
+        class="input-search"
+        [placeholder]="searchPlaceholder"
+        (ngxInputSearch)="searchTrigger($event)"
+      />
+    </div>
   </div>
   <div class="search-results">
     <ng-container *ngIf="results$ | async as results">
@@ -40,7 +44,7 @@
           <div
             [matTooltip]="getProfile(user)"
             matTooltipPosition="above"
-            matTooltipHideDelay="3000"
+            matTooltipHideDelay="500"
           >
             {{ user.name }}
           </div>
