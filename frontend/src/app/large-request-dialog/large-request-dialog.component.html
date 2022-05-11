@@ -1,0 +1,18 @@
+<mat-dialog-content class="mat-typography">
+  <h1>Warning: Large Request</h1>
+  This search request will take a long time and may not complete.
+  <b>Domain Size: {{ domain }}</b>
+
+  <h2>Estimates</h2>
+  <ul>
+    <li>1000 < Domain < 10000 ~ 30s</li>
+    <li>10000 < Domain < 100000 ~ 2 minutes +</li>
+    <li>Anything else might <b>not</b> complete.</li>
+  </ul>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button [mat-dialog-close]="'cancel'">Cancel</button>
+  <button mat-button [mat-dialog-close]="'continue'" cdkFocusInitial>
+    Continue anyway
+  </button>
+</mat-dialog-actions>

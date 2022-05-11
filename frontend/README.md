@@ -6,5 +6,6 @@ findComms is an application that searches an account's following for artists pro
 
 ## TODO
 
-- Profile preview
-- Filter by term
+- Close tooltip on blur??
+- Filter by term/search list
+- Pagination

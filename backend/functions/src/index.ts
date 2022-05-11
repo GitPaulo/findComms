@@ -1,3 +1,5 @@
+/* eslint-disable no-fallthrough */
+/* eslint-disable no-duplicate-case */
 import { TwitterApi, UserV1, UserV2 } from "twitter-api-v2";
 import express, { Express, Request, Response } from "express";
 import * as functions from "firebase-functions";
@@ -16,31 +18,86 @@ const app: Express = express();
 const twitterClient = new TwitterApi(String(process.env.TWITTER_API_BEARER));
 const client = twitterClient.readWrite;
 // Memory Cache
-const index = new memcache.Cache();
-const cache = new memcache.Cache();
+// ! does not scale homie
+const index = new memcache.Cache<string, string>();
+const indexTTL = 900000;
+const cache = new memcache.Cache<string, FindResult>();
+const cacheTTL = 60000;
 
+// Log function
+const log = (req: Request, ...args: unknown[]) => {
+  console.log(`[${req.url}]`, ...args);
+};
+
+// Typings
+type FindDomain = "followers" | "following" | "all";
+type TermsMap = { [id: string]: string[] };
+type ClosedOpenMap = { [id: string]: "open" | "closed" | "unknown" };
+interface FindResult {
+  statuses: ClosedOpenMap;
+  terms: TermsMap;
+  users: UserV2[];
+}
+
+// Uses
 app.use(cors());
 
-app.get("/", (req, res) => {
+// Endpoints
+app.get("/", (_, res: Response) => {
   res.sendFile("index.html", { root: __dirname });
 });
 
-app.get("/api/clearcaches", (req, res) => {
-  console.log("/clearcaches");
+app.get("/api/clearcaches", (req: Request, res: Response) => {
+  log(req, "/clearcaches");
   index.clear();
   cache.clear();
-  console.log("All memory caches cleared.");
+  log(req, "All memory caches cleared.");
   return res.status(204);
 });
 
-type FindDomain = "followers" | "following" | "all";
+app.get("/api/domain", async (req, res) => {
+  let userIdentifier = req.query.userIdentifier as string;
+  if (!userIdentifier) {
+    return res.status(400).send("Invalid user identifier.");
+  }
+
+  // Log
+  log(req, "/domain userIdentifier", userIdentifier);
+
+  // Trim
+  userIdentifier = userIdentifier.trim();
+
+  // Resolve ID
+  let user: UserV1;
+  try {
+    user = await client.v1.user({ screen_name: userIdentifier });
+    const id = user?.id_str;
+    if (!id) throw Error("id resolved to nothing.");
+    // cache identifier -> id
+    index.put(userIdentifier, id, indexTTL);
+  } catch (e: any) {
+    log(req, e.stack);
+    return res.status(400).send(`User '${userIdentifier}' does not exist.`);
+  }
+
+  log(req, "User retrieved ", user.id);
+
+  // Return domain size
+  res.setHeader("Content-Type", "application/json");
+  res.json({
+    followerCount: Number(user?.followers_count),
+    followingCount: Number(user?.friends_count),
+    domain: Number(user?.followers_count) + Number(user?.friends_count),
+  });
+});
+
 app.get("/api/find", async (req: Request, res: Response) => {
   let userIdentifier = req.query.userIdentifier as string;
   // eslint-disable-next-line prefer-const
   let findDomain = (req.query.domain as FindDomain) || "all";
 
   // Log
-  console.log("/followers userIdentifier", userIdentifier);
+  log(req, "/find userIdentifier", userIdentifier);
 
   if (!userIdentifier) {
     return res.status(400).send("Invalid user identifier.");
@@ -52,106 +109,134 @@ app.get("/api/find", async (req: Request, res: Response) => {
   // Resolve ID
   let id: string;
   try {
-    const cachedId = index.get(userIdentifier) as string;
+    const cachedId = index.get(userIdentifier);
     if (cachedId) {
-      console.log("Returned cached index");
+      log(req, "Returned cached index");
       id = cachedId;
     } else {
-      id = (await client.v2.userByUsername(userIdentifier))?.data?.id;
+      const user = await client.v2.userByUsername(userIdentifier);
+      id = user?.data?.id;
+      if (!id) throw Error("id resolved to nothing.");
     }
-    if (!id) throw Error("id resolved to nothing.");
+    // cache identifier -> id
     index.put(userIdentifier, id, 900000);
-    console.log("Resolved ID: " + id);
   } catch (e: any) {
-    console.log(e.stack);
-    return res
-      .status(400)
-      .send(`Could not find user from '${userIdentifier}'.`);
+    log(req, e.stack);
+    return res.status(400).send(`User '${userIdentifier}' does not exist.`);
   }
+
+  // Log id
+  log(req, "Resolved ID: " + id);
 
   // Resolve domain
   let domain: UserV2[] = [];
   try {
     /* ? mock
-    res.setHeader('Content-Type', 'application/json');
-    res.sendFile(path.join(__dirname, './mock_data.json'));
-    return;
+      res.setHeader('Content-Type', 'application/json');
+      res.sendFile(path.join(__dirname, './mock_data.json'));
+      return;
     */
     const cached = cache.get(`${id}_${findDomain}`);
     if (cached) {
       // Log
-      console.log("Returned cached value.");
-
-      res.setHeader("Content-Type", "application/json");
-      res.send(cached);
+      log(req, "Returned cached value.");
+      res.json(cached);
       return;
     }
 
+    const domainPaginators = [];
     switch (findDomain) {
       case "followers":
-        domain = (await client.v2.followers(id, { max_results: 1000 }))?.data;
-        break;
+      case "all": {
+        log(req, "followers");
+        domainPaginators.push(
+          await client.v2.followers(id, {
+            asPaginator: true,
+            max_results: 1000,
+          })
+        );
+      }
       case "following":
-        domain = (await client.v2.following(id, { max_results: 1000 }))?.data;
+      case "all": {
+        log(req, "following");
+        domainPaginators.push(
+          await client.v2.following(id, {
+            asPaginator: true,
+            max_results: 1000,
+          })
+        );
         break;
-      case "all":
-        // API call removes duplicates
-        domain = [
-          ...((await client.v2.following(id, { max_results: 1000 }))?.data ||
-            []),
-          ...((await client.v2.followers(id, { max_results: 1000 }))?.data ||
-            []),
-        ];
-        break;
+      }
       default:
         return res.status(400).send("Bad usage of domain!");
     }
 
+    for (const paginator of domainPaginators) {
+      if (paginator.errors.length) {
+        console.error(
+          `Paginator had errors: ${paginator.errors
+            .map((error) => error.detail)
+            .join(", ")}`
+        );
+        console.log(paginator.errors);
+        continue;
+      }
+      let i = 0;
+      do {
+        log(
+          req,
+          `Page: ${i++} [#${paginator?.data?.data?.length || 0}](done=${
+            paginator.done
+          })`
+        );
+        domain = [...domain, ...(paginator?.data?.data || [])]; // ugh
+        await paginator.fetchNext();
+      } while (!paginator.done);
+    }
+
     // If they have no followers/following
     if (!domain.length) {
-      res.setHeader("Content-Type", "application/json");
-      return res.send(JSON.stringify({ users: [], foundTerms: {} }));
+      return res.json({ users: [], foundTerms: {} });
     }
   } catch (e: any) {
-    console.log(e.stack);
+    log(req, e.stack);
     if (e.response.code === 421) {
-      console.log("Likely twitter API Rate limit reached!");
+      log(req, "Likely twitter API Rate limit reached!");
       return res.status(421).send("Rate limit reached?");
     }
     return res.status(500).send("Failed to resolve domain.");
   }
 
   // log size
-  console.log("Domain size: ", domain.length);
+  log(req, "Domain size: ", domain.length);
 
   // Resolve domain users
-  let domainUsers: UserV1[] = [];
+  let domainUsers: UserV2[] = [];
   try {
     let followerIds = domain.map((user: UserV2) => user.id);
     followerIds = [...new Set(followerIds)];
-    console.log("Trimmed size: ", followerIds.length);
+    log(req, "Trimmed size: ", followerIds.length);
 
-    // API restriction
+    // Chunk user resolving
     // TODO use POST?
     const chunkSize = 100;
+    log(req, "Resolving usernames chunkSize=" + chunkSize);
     for (let i = 0; i < followerIds.length; i += chunkSize) {
+      log(req, `Chunk: ${i}`);
       const chunkIds = followerIds.slice(i, i + chunkSize);
-      domainUsers = [
-        ...domainUsers,
-        ...(await client.v1.users({ user_id: chunkIds })),
-      ];
+      domainUsers = [...domainUsers, ...(await client.v2.users(chunkIds)).data];
     }
-    console.log("Result size:", domainUsers.length);
+    log(req, "Result size:", domainUsers.length);
   } catch (e: any) {
-    console.log(e.stack);
+    log(req, e.stack);
     return res.status(500).send("Failed to resolve follower user data.");
   }
 
   // Filter users by comms in descriptions
   // TODO: more complex search
-  const openOrClosed: { [id: string]: "open" | "closed" | "unknown" } = {};
-  const foundTerms: { [id: string]: string[] } = {};
-  domainUsers = domainUsers.filter((user: UserV1) => {
+  const openOrClosed: ClosedOpenMap = {};
+  const foundTerms: TermsMap = {};
+  domainUsers = domainUsers.filter((user: UserV2) => {
     for (const [keyTerm, terms] of Object.entries(termsMap)) {
       const searchSpace =
         user.name.toLowerCase() + user.description?.toLowerCase();
@@ -180,16 +265,15 @@ app.get("/api/find", async (req: Request, res: Response) => {
   });
 
   // Cache it, rate limits!!
-  const responseValue = JSON.stringify({
+  const responseValue: FindResult = {
     statuses: openOrClosed,
     terms: foundTerms,
     users: domainUsers,
-  });
-  cache.put(`${id}_${findDomain}`, responseValue, 60000);
+  };
+  cache.put(`${id}_${findDomain}`, responseValue, cacheTTL);
 
   // Respond
-  res.setHeader("Content-Type", "application/json");
-  res.send(responseValue);
+  res.json(responseValue);
 });
 
 exports.app = functions.https.onRequest(app);

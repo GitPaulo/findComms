@@ -12,9 +12,10 @@ import { NgxInputSearchModule } from "ngx-input-search";
 import { A11yModule } from "@angular/cdk/a11y";
 import { InfoDialogComponent } from "./info-dialog/info-dialog.component";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { LargeRequestDialogComponent } from './large-request-dialog/large-request-dialog.component';
 
 @NgModule({
-  declarations: [AppComponent, InfoDialogComponent],
+  declarations: [AppComponent, InfoDialogComponent, LargeRequestDialogComponent],
   imports: [
     BrowserModule,
     HttpClientModule,

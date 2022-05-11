@@ -30,17 +30,17 @@
     ></mat-spinner>
   </div>
   <div class="search-results">
-    <div class="info message" *ngIf="(results$ | async)?.users?.length === 0">
-      No results.
-    </div>
-    <div class="error message" *ngIf="error">{{ error }}</div>
     <ng-container *ngIf="results$ | async as results">
+      <div class="info message" *ngIf="results?.users?.length === 0">
+        No results.
+      </div>
+      <div class="error message" *ngIf="error">{{ error }}</div>
       <ng-container *ngFor="let user of results?.users">
         <div class="search-result" (click)="gotoTwitterProfile(user)">
           <div
             [matTooltip]="getProfile(user)"
             matTooltipPosition="above"
-            matTooltipHideDelay="100000"
+            matTooltipHideDelay="3000"
           >
             {{ user.name }}
           </div>
