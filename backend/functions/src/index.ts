@@ -85,9 +85,9 @@ app.get("/api/domain", async (req, res) => {
   // Return domain size
   res.setHeader("Content-Type", "application/json");
   res.json({
-    followerCount: Number(user?.followers_count),
-    followingCount: Number(user?.friends_count),
-    domain: Number(user?.followers_count) + Number(user?.friends_count),
+    followers: Number(user?.followers_count),
+    following: Number(user?.friends_count),
+    all: Number(user?.followers_count) + Number(user?.friends_count),
   });
 });
 
@@ -200,9 +200,9 @@ app.get("/api/find", async (req: Request, res: Response) => {
     }
   } catch (e: any) {
     log(req, e.stack);
-    if (e.response.code === 421) {
+    if (e.data.status === 429) {
       log(req, "Likely twitter API Rate limit reached!");
-      return res.status(421).send("Rate limit reached?");
+      return res.status(500).send("Twitter rate limit reached!");
     }
     return res.status(500).send("Failed to resolve domain.");
   }
@@ -229,6 +229,10 @@ app.get("/api/find", async (req: Request, res: Response) => {
     log(req, "Result size:", domainUsers.length);
   } catch (e: any) {
     log(req, e.stack);
+    if (e.data.status === 429) {
+      log(req, "Likely twitter API Rate limit reached!");
+      return res.status(500).send("Twitter rate limit reached!");
+    }
     return res.status(500).send("Failed to resolve follower user data.");
   }
 

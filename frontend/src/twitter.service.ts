@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
-import { Observable, share, shareReplay } from "rxjs";
+import { Observable, shareReplay } from "rxjs";
 import { environment } from "./environments/environment";
 
 export interface CommsData {
@@ -10,9 +10,7 @@ export interface CommsData {
 }
 
 export interface DomainData {
-  followingCount: number;
-  followerCount: number;
-  domain: number;
+  [id: string]: number;
 }
 
 export type FindDomain = "followers" | "following" | "all";

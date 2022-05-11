@@ -2,15 +2,7 @@ import { Component, ElementRef, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
-import {
-  catchError,
-  finalize,
-  map,
-  Observable,
-  of,
-  switchMap,
-  tap,
-} from "rxjs";
+import { catchError, finalize, Observable, of, switchMap } from "rxjs";
 import { DomainData, FindDomain, TwitterService } from "src/twitter.service";
 import { CommsData } from "../twitter.service";
 import { InfoDialogComponent } from "./info-dialog/info-dialog.component";
@@ -84,12 +76,13 @@ export class AppComponent {
     this.error = "";
     this.loading = true;
     this.results$ = this.twitterService.getDomain(userIdentifier).pipe(
-      switchMap((data: DomainData, i) => {
+      switchMap((data: DomainData) => {
         // Large domain > 5000
-        if (data.domain > 5000) {
+        const domainSize = data[domain];
+        if (domainSize > 5000) {
           const dialogRef = this.dialog.open(LargeRequestDialogComponent, {
             data: {
-              domain: data.domain,
+              domain: domainSize,
             },
           });
           return dialogRef.afterClosed();
@@ -109,7 +102,7 @@ export class AppComponent {
         this.error =
           error instanceof ProgressEvent
             ? "API is likely down!"
-            : error || "Application error or API is down?";
+            : error || error.message || "No clue what went wrong, retry lol?";
         return of(emptyData);
       }),
       finalize(() => {
@@ -123,7 +116,7 @@ export class AppComponent {
   }
 
   getProfile(user: any): string {
-    return user?.url || `https://twitter.com/${user?.screen_name}`;
+    return user?.url || `https://twitter.com/${user?.username}`;
   }
 
   gotoTwitterProfile(user: any): void {
