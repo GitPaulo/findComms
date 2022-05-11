@@ -85,7 +85,8 @@ export class AppComponent {
     this.loading = true;
     this.results$ = this.twitterService.getDomain(userIdentifier).pipe(
       switchMap((data: DomainData, i) => {
-        if (data.domain > 1000) {
+        // Large domain > 5000
+        if (data.domain > 5000) {
           const dialogRef = this.dialog.open(LargeRequestDialogComponent, {
             data: {
               domain: data.domain,
