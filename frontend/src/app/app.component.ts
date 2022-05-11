@@ -45,8 +45,6 @@ export class AppComponent {
     const emptyData: CommsData = { users: [], terms: {}, statuses: {} };
     const splitIndex = stringEmitted.indexOf(":");
 
-    console.log(stringEmitted);
-
     let userIdentifier = stringEmitted;
     let domain: FindDomain = "all";
     if (splitIndex > 0) {
@@ -89,10 +87,12 @@ export class AppComponent {
     return termMap[userId];
   }
 
+  getProfile(user: any): string {
+    return user?.url || `https://twitter.com/${user?.screen_name}`;
+  }
+
   gotoTwitterProfile(user: any): void {
-    window
-      .open(user?.url || `https://twitter.com/${user?.screen_name}`, "_blank")
-      ?.focus();
+    window.open(this.getProfile(user), "_blank")?.focus();
   }
 
   openInfoDialog(): void {

@@ -3,7 +3,7 @@ import express, { Express, Request, Response } from "express";
 import * as functions from "firebase-functions";
 import dotenv from "dotenv";
 import cors from "cors";
-import path from "path";
+// import path from "path";
 // ? this wont scale
 import memcache from "memory-cache";
 import termsMap from "./terms_map.json";
@@ -60,7 +60,7 @@ app.get("/api/find", async (req: Request, res: Response) => {
       id = (await client.v2.userByUsername(userIdentifier))?.data?.id;
     }
     if (!id) throw Error("id resolved to nothing.");
-    index.put(userIdentifier, id);
+    index.put(userIdentifier, id, 900000);
     console.log("Resolved ID: " + id);
   } catch (e: any) {
     console.log(e.stack);
@@ -185,7 +185,7 @@ app.get("/api/find", async (req: Request, res: Response) => {
     terms: foundTerms,
     users: domainUsers,
   });
-  cache.put(`${id}_${findDomain}`, responseValue, 300000);
+  cache.put(`${id}_${findDomain}`, responseValue, 60000);
 
   // Respond
   res.setHeader("Content-Type", "application/json");

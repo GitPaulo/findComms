@@ -19,7 +19,7 @@
       #searchInput
       type="text"
       class="input-search"
-      placeholder="Type a Username to Search for Artists..."
+      placeholder="Type a Twitter Username to Search..."
       (ngxInputSearch)="searchTrigger($event)"
     />
     <mat-spinner
@@ -37,7 +37,13 @@
     <ng-container *ngIf="results$ | async as results">
       <ng-container *ngFor="let user of results?.users">
         <div class="search-result" (click)="gotoTwitterProfile(user)">
-          {{ user.name }}
+          <div
+            [matTooltip]="getProfile(user)"
+            matTooltipPosition="above"
+            matTooltipHideDelay="100000"
+          >
+            {{ user.name }}
+          </div>
           <span
             class="search-term"
             *ngFor="let term of getTerms(results.terms, user.id)"

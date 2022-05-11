@@ -11,6 +11,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { NgxInputSearchModule } from "ngx-input-search";
 import { A11yModule } from "@angular/cdk/a11y";
 import { InfoDialogComponent } from "./info-dialog/info-dialog.component";
+import { MatTooltipModule } from "@angular/material/tooltip";
 
 @NgModule({
   declarations: [AppComponent, InfoDialogComponent],
@@ -25,6 +26,7 @@ import { InfoDialogComponent } from "./info-dialog/info-dialog.component";
     MatIconModule,
     MatDialogModule,
     MatButtonModule,
+    MatTooltipModule,
   ],
   providers: [TwitterService],
   bootstrap: [AppComponent],
