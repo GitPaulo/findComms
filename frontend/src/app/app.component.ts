@@ -1,5 +1,5 @@
 import { BreakpointObserver, BreakpointState } from "@angular/cdk/layout";
-import { Component, ElementRef, ViewChild } from "@angular/core";
+import { Component, ElementRef, HostListener, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
@@ -26,11 +26,13 @@ export interface LargeRequestDialogData {
 export class AppComponent {
   @ViewChild("searchInput")
   searchInput!: ElementRef;
+  results$: Observable<CommsData> = new Observable<CommsData>();
   title = "findComms";
   searchPlaceholder = "Type a Twitter Username to Search...";
-  loading = false;
-  results$: Observable<CommsData> = new Observable<CommsData>();
   error = "";
+  loading = false;
+  collectedKeys: string[] = [];
+  openTimeout: any;
 
   constructor(
     private twitterService: TwitterService,
@@ -46,7 +48,6 @@ export class AppComponent {
     breakpointObserver
       .observe(["(max-width: 600px)"])
       .subscribe((state: BreakpointState) => {
-        console.log("?");
         if (state.matches) {
           this.searchPlaceholder = "Twitter Username...";
         } else {
@@ -57,10 +58,40 @@ export class AppComponent {
 
   ngOnInit(): void {}
 
+  @HostListener("document:keydown.escape", ["$event"]) onKeydownHandler(
+    event: KeyboardEvent
+  ) {
+    if (window.document.activeElement === this.searchInput.nativeElement) {
+      this.searchInput.nativeElement.blur();
+    }
+  }
+
+  @HostListener("document:keypress", ["$event"])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (window.document.activeElement !== this.searchInput.nativeElement) {
+      this.collectedKeys.push(event.key);
+      if (!this.openTimeout) {
+        this.openTimeout = setTimeout(() => {
+          this.focusInput();
+          this.searchInput.nativeElement.value += this.collectedKeys.join("");
+          this.collectedKeys = [];
+          // TODO: improve shitcode
+          clearTimeout(this.openTimeout);
+          this.openTimeout = null;
+        }, 200);
+      }
+    }
+  }
+
+  focusInput(): void {
+    if (window.document.activeElement !== this.searchInput.nativeElement) {
+      this.searchInput.nativeElement.focus();
+    }
+  }
+
   searchTrigger($event: Event): void {
     const stringEmitted = ($event.target as HTMLInputElement).value;
-    // If your at is small, too bad
-    if (stringEmitted.length < 3) return;
+    if (stringEmitted.length < 3) return; // If your at is small, too bad
     const emptyData: CommsData = { users: [], terms: {}, statuses: {} };
     const splitIndex = stringEmitted.indexOf(":");
 
@@ -138,13 +169,5 @@ export class AppComponent {
 
   openInfoDialog(): void {
     this.dialog.open(InfoDialogComponent);
-  }
-
-  focusWithDelay(event: MouseEvent, delay: number): void {
-    // shitcode
-    setTimeout(() => {
-      this.searchInput.nativeElement.focus();
-    }, delay);
-    event.stopPropagation();
   }
 }
