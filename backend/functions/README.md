@@ -8,7 +8,6 @@ findComms is an application that searches an account's following for artists pro
 
 - redis instead of memcached
 - auth endpoints?
-
 - More terms_map
 - More terms?
 - What happens if i feed it elon musk? rate limit huh
