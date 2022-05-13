@@ -5,8 +5,12 @@ import { MatDialog } from "@angular/material/dialog";
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
 import { catchError, finalize, Observable, of, switchMap } from "rxjs";
-import { DomainData, FindDomain, TwitterService } from "src/twitter.service";
-import { CommsData } from "../twitter.service";
+import {
+  DomainData,
+  FindDomain,
+  TwitterService,
+} from "src/app/twitter.service";
+import { CommsData } from "./twitter.service";
 import { InfoDialogComponent } from "./info-dialog/info-dialog.component";
 import { LargeRequestDialogComponent } from "./large-request-dialog/large-request-dialog.component";
 
