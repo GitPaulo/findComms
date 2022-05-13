@@ -1,4 +1,5 @@
 import { BreakpointObserver, BreakpointState } from "@angular/cdk/layout";
+import { HttpErrorResponse } from "@angular/common/http";
 import { Component, ElementRef, HostListener, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatIconRegistry } from "@angular/material/icon";
@@ -121,7 +122,7 @@ export class AppComponent {
     this.loading = true;
     this.results$ = this.twitterService.getDomain(userIdentifier).pipe(
       switchMap((data: DomainData) => {
-        // Large domain > 5000
+        // ! Large domain > 5000
         const domainSize = data[domain];
         if (domainSize > 5000) {
           const dialogRef = this.dialog.open(LargeRequestDialogComponent, {
@@ -142,11 +143,17 @@ export class AppComponent {
         }
         return of(result);
       }),
-      catchError(({ error }: { error: string | any }) => {
+      catchError((errorResponse: HttpErrorResponse) => {
         this.error =
-          error instanceof ProgressEvent
-            ? "API is likely down!"
-            : error || error?.message || "No clue what went wrong, retry lol?";
+          errorResponse?.error ||
+          errorResponse?.error?.message ||
+          "No clue what happened, lol! Retry?";
+        if (errorResponse.status === 0) {
+          this.error = "API is likely down!";
+        }
+        if (errorResponse.status === 1337) {
+          return of({});
+        }
         return of(emptyData);
       }),
       finalize(() => {

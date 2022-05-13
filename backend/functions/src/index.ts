@@ -5,18 +5,19 @@ import express, { Express, Request, Response } from "express";
 import * as functions from "firebase-functions";
 import dotenv from "dotenv";
 import cors from "cors";
-// import path from "path";
 // ? this wont scale
 import memcache from "memory-cache";
-import termsMap from "./terms_map.json";
+import { findComms, FindResult } from "./findComms";
 
 dotenv.config();
 
 // Express
 const app: Express = express();
+
 // Twitter API
 const twitterClient = new TwitterApi(String(process.env.TWITTER_API_BEARER));
 const client = twitterClient.readWrite;
+
 // Memory Cache
 // ! does not scale homie
 const index = new memcache.Cache<string, string>();
@@ -31,13 +32,6 @@ const log = (req: Request, ...args: unknown[]) => {
 
 // Typings
 type FindDomain = "followers" | "following" | "all";
-type TermsMap = { [id: string]: string[] };
-type ClosedOpenMap = { [id: string]: "open" | "closed" | "unknown" };
-interface FindResult {
-  statuses: ClosedOpenMap;
-  terms: TermsMap;
-  users: UserV2[];
-}
 
 // Uses
 app.use(cors());
@@ -93,8 +87,7 @@ app.get("/api/domain", async (req, res) => {
 
 app.get("/api/find", async (req: Request, res: Response) => {
   let userIdentifier = req.query.userIdentifier as string;
-  // eslint-disable-next-line prefer-const
-  let findDomain = (req.query.domain as FindDomain) || "all";
+  const findDomain = (req.query.domain as FindDomain) || "all";
 
   // Log
   log(req, "/find userIdentifier", userIdentifier);
@@ -102,8 +95,6 @@ app.get("/api/find", async (req: Request, res: Response) => {
   if (!userIdentifier) {
     return res.status(400).send("Invalid user identifier.");
   }
-
-  // Trim
   userIdentifier = userIdentifier.trim();
 
   // Resolve ID
@@ -131,17 +122,10 @@ app.get("/api/find", async (req: Request, res: Response) => {
   // Resolve domain
   let domain: UserV2[] = [];
   try {
-    /* ? mock
-      res.setHeader('Content-Type', 'application/json');
-      res.sendFile(path.join(__dirname, './mock_data.json'));
-      return;
-    */
     const cached = cache.get(`${id}_${findDomain}`);
     if (cached) {
-      // Log
       log(req, "Returned cached value.");
-      res.json(cached);
-      return;
+      return res.json(cached);
     }
 
     const domainPaginators = [];
@@ -150,20 +134,14 @@ app.get("/api/find", async (req: Request, res: Response) => {
       case "all": {
         log(req, "followers");
         domainPaginators.push(
-          await client.v2.followers(id, {
-            asPaginator: true,
-            max_results: 1000,
-          })
+          await client.v2.followers(id, { asPaginator: true })
         );
       }
       case "following":
       case "all": {
         log(req, "following");
         domainPaginators.push(
-          await client.v2.following(id, {
-            asPaginator: true,
-            max_results: 1000,
-          })
+          await client.v2.following(id, { asPaginator: true })
         );
         break;
       }
@@ -229,51 +207,22 @@ app.get("/api/find", async (req: Request, res: Response) => {
     log(req, "Result size:", domainUsers.length);
   } catch (e: any) {
     log(req, e.stack);
+    // This time we have data
     if (e.data.status === 429) {
-      log(req, "Likely twitter API Rate limit reached!");
-      return res.status(500).send("Twitter rate limit reached!");
+      log(
+        req,
+        "Twitter API limit reached cant continue. Sending data that I have..."
+      );
+      return res.status(500).json({
+        message: "API rate limit reached! Not all of the domain was searched.",
+        result: findComms(domainUsers),
+      });
     }
     return res.status(500).send("Failed to resolve follower user data.");
   }
 
-  // Filter users by comms in descriptions
-  // TODO: more complex search
-  const openOrClosed: ClosedOpenMap = {};
-  const foundTerms: TermsMap = {};
-  domainUsers = domainUsers.filter((user: UserV2) => {
-    for (const [keyTerm, terms] of Object.entries(termsMap)) {
-      const searchSpace =
-        user.name.toLowerCase() + user.description?.toLowerCase();
-      // terms
-      if (terms.some((term: string) => searchSpace.includes(term))) {
-        foundTerms[user.id] = foundTerms[user.id]
-          ? [...foundTerms[user.id], keyTerm]
-          : [keyTerm];
-      }
-      // open/closed
-      // TODO: improve
-      const open = searchSpace.includes("open");
-      const closed = searchSpace.includes("closed");
-      if (open) {
-        openOrClosed[user.id] = "open";
-      } else if (closed) {
-        openOrClosed[user.id] = "closed";
-      }
-
-      if (open && closed) {
-        openOrClosed[user.id] = "unknown";
-      }
-    }
-
-    return Boolean(foundTerms[user.id]?.length);
-  });
-
   // Cache it, rate limits!!
-  const responseValue: FindResult = {
-    statuses: openOrClosed,
-    terms: foundTerms,
-    users: domainUsers,
-  };
+  const responseValue = findComms(domainUsers);
   cache.put(`${id}_${findDomain}`, responseValue, cacheTTL);
 
   // Respond

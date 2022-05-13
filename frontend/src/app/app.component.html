@@ -43,6 +43,7 @@
       <ng-container *ngFor="let user of results?.users">
         <div class="search-result" (click)="gotoTwitterProfile(user)">
           <div
+            class="result-text"
             [matTooltip]="getProfile(user)"
             matTooltipPosition="above"
             matTooltipHideDelay="500"
