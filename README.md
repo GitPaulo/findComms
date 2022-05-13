@@ -1,5 +1,5 @@
 # findComms
-A tool to find twitter artists doing commissions.
+A tool to find twitter artists doing commissions from a user's follower/ing space.
 
 https://findcomms.web.app/
 
