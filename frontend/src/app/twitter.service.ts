@@ -2,18 +2,11 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable, shareReplay } from "rxjs";
 import { environment } from "../environments/environment";
-
-export interface CommsData {
-  users: any[];
-  terms: { [id: string]: string };
-  statuses: { [id: string]: "open" | "closed" | "unknown" };
-}
-
-export interface DomainData {
-  [id: string]: number;
-}
-
-export type FindDomain = "followers" | "following" | "all";
+import {
+  DomainResult,
+  FindResult,
+  FindDomain,
+} from "../../../transfer/transfer-types";
 
 @Injectable({
   providedIn: "root",
@@ -21,9 +14,9 @@ export type FindDomain = "followers" | "following" | "all";
 export class TwitterService {
   constructor(private http: HttpClient) {}
 
-  getDomain(userIdentifier: string): Observable<DomainData> {
+  getDomain(userIdentifier: string): Observable<DomainResult> {
     return this.http
-      .get<DomainData>(`${environment.apiUrl}/api/domain`, {
+      .get<DomainResult>(`${environment.apiUrl}/api/domain`, {
         params: { userIdentifier },
       })
       .pipe(shareReplay());
@@ -32,9 +25,9 @@ export class TwitterService {
   getCommsUsers(
     userIdentifier: string,
     domain: FindDomain
-  ): Observable<CommsData> {
+  ): Observable<FindResult> {
     return this.http
-      .get<CommsData>(`${environment.apiUrl}/api/find`, {
+      .get<FindResult>(`${environment.apiUrl}/api/find`, {
         params: { userIdentifier, domain },
       })
       .pipe(shareReplay());

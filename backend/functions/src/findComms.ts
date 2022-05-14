@@ -1,14 +1,10 @@
 import { UserV2 } from "twitter-api-v2";
 import termsMap from "./terms_map.json";
-
-// Typings
-export interface FindResult {
-  statuses: ClosedOpenMap;
-  terms: TermsMap;
-  users: UserV2[];
-}
-export type TermsMap = { [id: string]: string[] };
-export type ClosedOpenMap = { [id: string]: "open" | "closed" | "unknown" };
+import {
+  FindResult,
+  ClosedOpenMap,
+  TermsMap,
+} from "../../../transfer/transfer-types";
 
 // findComms
 export function findComms(domainUsers: UserV2[]): FindResult {

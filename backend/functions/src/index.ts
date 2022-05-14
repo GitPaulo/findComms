@@ -1,5 +1,7 @@
 /* eslint-disable no-fallthrough */
 /* eslint-disable no-duplicate-case */
+import { findComms } from "./findComms";
+import { FindResult, FindDomain } from "../../../transfer/transfer-types";
 import { TwitterApi, UserV1, UserV2 } from "twitter-api-v2";
 import express, { Express, Request, Response } from "express";
 import * as functions from "firebase-functions";
@@ -7,8 +9,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 // ? this wont scale
 import memcache from "memory-cache";
-import { findComms, FindResult } from "./findComms";
 
+// Load environment
 dotenv.config();
 
 // Express
@@ -31,7 +33,6 @@ const log = (req: Request, ...args: unknown[]) => {
 };
 
 // Typings
-type FindDomain = "followers" | "following" | "all";
 
 // Uses
 app.use(cors());
@@ -89,7 +90,6 @@ app.get("/api/find", async (req: Request, res: Response) => {
   let userIdentifier = req.query.userIdentifier as string;
   const findDomain = (req.query.domain as FindDomain) || "all";
 
-  // Log
   log(req, "/find userIdentifier", userIdentifier);
 
   if (!userIdentifier) {
@@ -116,7 +116,6 @@ app.get("/api/find", async (req: Request, res: Response) => {
     return res.status(400).send(`User '${userIdentifier}' does not exist.`);
   }
 
-  // Log id
   log(req, "Resolved ID: " + id);
 
   // Resolve domain
@@ -185,7 +184,6 @@ app.get("/api/find", async (req: Request, res: Response) => {
     return res.status(500).send("Failed to resolve domain.");
   }
 
-  // log size
   log(req, "Domain size: ", domain.length);
 
   // Resolve domain users
@@ -213,7 +211,7 @@ app.get("/api/find", async (req: Request, res: Response) => {
         req,
         "Twitter API limit reached cant continue. Sending data that I have..."
       );
-      return res.status(500).json({
+      return res.status(1337).json({
         message: "API rate limit reached! Not all of the domain was searched.",
         result: findComms(domainUsers),
       });
