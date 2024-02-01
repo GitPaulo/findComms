@@ -1,6 +1,11 @@
 # findComms [DEAD BLAME ELON]
 A tool to find twitter artists doing commissions from a user's follower/ing space.
 
+- Backend [README](./backend/README.md)
+- Frontend [README](./frontend/README.md)
+- Transfer [README](./transfer/README.md)
+
+
 https://findcomms.web.app/
 
 ![image](https://user-images.githubusercontent.com/18451329/167970647-473208db-d31e-49ab-b316-6b96536725c7.png)
