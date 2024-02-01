@@ -7,3 +7,11 @@ https://findcomms.web.app/
 
 > This shit doesn't scale & API is unauthed, be nice! 
 
+## TODO/Revive List
+
+- [ ] Better caching or devise a better than bruteforce approach at searching.
+- [ ] Additional filtering options
+    - Go through a user's metadata, posts, etc. and **collect** #tags to be used for filtering
+    - Follow and links in bio for additional information? (**webscrapping will be painful**)
+
+
