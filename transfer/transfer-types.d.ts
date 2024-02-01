@@ -1,4 +1,4 @@
-import { UserV2 } from "../backend/functions/node_modules/twitter-api-v2/dist/index";
+import { UserV2 } from "twitter-api-v2";
 
 export type TermsMap = { [id: string]: string[] };
 export type ClosedOpenMap = { [id: string]: "open" | "closed" | "unknown" };

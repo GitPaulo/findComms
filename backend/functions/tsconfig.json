@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2020",
     "module": "commonjs",
     "outDir": "./lib",
     "strict": true,
@@ -10,8 +10,20 @@
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    // Base directory to resolve non-relative module names
+    "baseUrl": ".",
+    // Paths for module resolution
+    "paths": {
+      "*": ["node_modules/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+ "include": [
+    "src/**/*", // Include all files in the src directory
+    "../transfer/*" // Include files in the transfer directory
+  ],
+  "exclude": [
+    "node_modules", // Exclude node_modules
+    "**/*.spec.ts"  // Exclude test files
+  ]
 }
